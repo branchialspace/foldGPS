@@ -34,7 +34,7 @@ from graphgps.transform.dist_transforms import (add_dist_features, add_reverse_e
                                                  effective_resistance_embedding,
                                                  effective_resistances_from_embedding)
 
-
+'''
 def log_loaded_dataset(dataset, format, name):
     logging.info(f"[*] Loaded dataset '{name}' from '{format}':")
     logging.info(f"  {dataset.data}")
@@ -73,7 +73,7 @@ def log_loaded_dataset(dataset, format, name):
             logging.info(f"  num edge classes: (probably a regression task)")
         else:
             logging.info(f"  num edge classes: {len(torch.unique(labels))}")
-
+'''
     ## Show distribution of graph sizes.
     # graph_sizes = [d.num_nodes if hasattr(d, 'num_nodes') else d.x.shape[0]
     #                for d in dataset]
@@ -107,10 +107,13 @@ def load_dataset_master(format, name, dataset_dir):
     """
     if format.startswith('PyG-'):
         pyg_dataset_id = format.split('-', 1)[1]
-        dataset_dir = osp.join(dataset_dir, pyg_dataset_id)
+        # dataset_dir = osp.join(dataset_dir, pyg_dataset_id)
 
         if pyg_dataset_id == 'GNNBenchmarkDataset':
             dataset = preformat_GNNBenchmarkDataset(dataset_dir, name)
+
+        elif pyg_dataset_id == 'Alphafold':
+            dataset = preformat_Alphafold(name)
 
         elif pyg_dataset_id == 'MalNetTiny':
             dataset = preformat_MalNetTiny(dataset_dir, feature_set=name)
@@ -207,8 +210,10 @@ def load_dataset_master(format, name, dataset_dir):
             raise ValueError(f"Unsupported OGB(-derived) dataset: {name}")
     else:
         raise ValueError(f"Unknown data format: {format}")
-    log_loaded_dataset(dataset, format, name)
+      
+    # log_loaded_dataset(dataset, format, name)
 
+'''
     # Precompute necessary statistics for positional encodings.
     pe_enabled_list = []
     for key, pecfg in cfg.items():
@@ -329,7 +334,7 @@ def load_dataset_master(format, name, dataset_dir):
 
     # Verify or generate dataset train/val/test splits
     prepare_splits(dataset)
-
+'''
     # Precompute in-degree histogram if needed for PNAConv.
     if cfg.gt.layer_type.startswith('PNAConv') and len(cfg.gt.pna_degrees) == 0:
         cfg.gt.pna_degrees = compute_indegree_histogram(
@@ -358,6 +363,22 @@ def compute_indegree_histogram(dataset):
         deg += torch.bincount(d, minlength=deg.numel())
     return deg.numpy().tolist()[:max_degree + 1]
 
+def preformat_Alphafold(name):
+    # Load and preformat custom Alphafold dataset.
+    dataset = Alphafold()
+    dataset.name = 'Alphafold'
+    
+    split_file = '/content/drive/MyDrive/protein-DATA/pyg_go_split_indices.pt'
+    split_dict = torch.load(split_file)
+
+    file_name_to_index = {name: i for i, name in enumerate(dataset.processed_file_names)}
+    dataset.split_idxs = [
+        [file_name_to_index[name] for name in split_dict['train']],
+        [file_name_to_index[name] for name in split_dict['valid']],
+        [file_name_to_index[name] for name in split_dict['test']]
+    ]
+
+    return dataset
 
 def preformat_GNNBenchmarkDataset(dataset_dir, name):
     """Load and preformat datasets from PyG's GNNBenchmarkDataset.
