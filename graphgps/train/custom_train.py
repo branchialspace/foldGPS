@@ -43,8 +43,10 @@ def train_epoch(logger, loader, model, optimizer, scheduler, batch_accumulation)
             _true = true[split_idx].detach().to('cpu', non_blocking=True)
             _pred = pred_score.detach().to('cpu', non_blocking=True)
         else:
-            loss, pred_score = compute_loss(pred, true)
-            _true = true.detach().to('cpu', non_blocking=True)
+            # Reshape true for loss calculation
+            true_reshaped = true.unsqueeze(0) if true.dim() == 1 else true
+            loss, pred_score = compute_loss(pred, true_reshaped)
+            _true = true_reshaped.detach().to('cpu', non_blocking=True)
             _pred = pred_score.detach().to('cpu', non_blocking=True)
         loss.backward()
         # Parameters update after accumulating gradients for given num. batches.
@@ -85,8 +87,10 @@ def eval_epoch(logger, loader, model, split='val'):
             _true = true[index_split].detach().to('cpu', non_blocking=True)
             _pred = pred_score.detach().to('cpu', non_blocking=True)
         else:
-            loss, pred_score = compute_loss(pred, true)
-            _true = true.detach().to('cpu', non_blocking=True)
+            # Reshape true for loss calculation
+            true_reshaped = true.unsqueeze(0) if true.dim() == 1 else true
+            loss, pred_score = compute_loss(pred, true_reshaped)
+            _true = true_reshaped.detach().to('cpu', non_blocking=True)
             _pred = pred_score.detach().to('cpu', non_blocking=True)
         logger.update_stats(true=_true,
                             pred=_pred,
