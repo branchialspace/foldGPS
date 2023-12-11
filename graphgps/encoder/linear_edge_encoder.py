@@ -12,8 +12,7 @@ class LinearEdgeEncoder(torch.nn.Module):
         elif cfg.dataset.name == "ogbn-proteins":
             self.in_dim = 8
         else:
-            raise ValueError("Input edge feature dim is required to be hardset "
-                             "or refactored to use a cfg option.")
+            self.in_dim = 2
         self.encoder = torch.nn.Linear(self.in_dim, emb_dim)
 
     def forward(self, batch):
