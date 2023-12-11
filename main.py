@@ -6,11 +6,15 @@ import logging
 import graphgps  # noqa, register custom modules
 from graphgps.optimizer.extra_optimizers import ExtendedSchedulerConfig
 
+from torch_geometric.loader import DataLoader
+from torch_geometric.graphgym.loader import load_dataset
+from torch_geometric.graphgym import register
+
 from torch_geometric.graphgym.cmd_args import parse_args
 from torch_geometric.graphgym.config import (cfg, dump_cfg,
                                              set_agg_dir, set_cfg, load_cfg,
                                              makedirs_rm_exist)
-from torch_geometric.graphgym.loader import create_loader
+
 from torch_geometric.graphgym.logger import set_printing
 from torch_geometric.graphgym.optim import create_optimizer, \
     create_scheduler, OptimizerConfig
@@ -25,6 +29,93 @@ from torch_geometric import seed_everything
 from graphgps.finetuning import load_pretrained_model_cfg, \
     init_model_from_pretrained
 from graphgps.logger import create_logger
+
+torch.backends.cuda.matmul.allow_tf32 = True  # Default False in PyTorch 1.12+
+torch.backends.cudnn.allow_tf32 = True  # Default True
+
+def load_dataset():
+    r"""Load dataset objects.
+
+    Returns: PyG dataset object
+
+    """
+    format = cfg.dataset.format
+    name = cfg.dataset.name
+    dataset_dir = cfg.dataset.dir
+    # Try to load customized data format
+    for func in register.loader_dict.values():
+        dataset = func(format, name, dataset_dir)
+        if dataset is not None:
+            print("loading dataset...")
+            print(len(dataset))
+            return dataset
+    else:
+        raise ValueError(f"Unknown data format '{format}'")
+    return dataset
+
+def set_dataset_info(dataset):
+    r"""Set global dataset information.
+
+    Args:
+        dataset: PyG dataset object
+
+    """
+    # Get the first graph in the dataset to infer dimensions
+    first_graph = dataset[0]
+
+    # get dim_in
+    try:
+        cfg.share.dim_in = first_graph.x.shape[1]
+    except Exception:
+        cfg.share.dim_in = 1
+
+    # get dim_out
+    try:
+        if cfg.dataset.task_type == 'classification':
+            cfg.share.dim_out = torch.unique(first_graph.y).shape[0]
+        else:
+            cfg.share.dim_out = first_graph.y.shape[0]
+    except Exception:
+        cfg.share.dim_out = 1
+
+    # hard coded train, val, test spit count
+    cfg.share.num_splits = 3
+
+def create_dataset():
+    r"""Create dataset object.
+
+    Returns: PyG dataset object
+
+    """
+    dataset = load_dataset()
+    set_dataset_info(dataset)
+
+    return dataset
+
+def create_loader():
+    """Create data loaders for a PyG Dataset object with specific split attributes.
+
+    Returns: 
+        List of PyTorch data loaders
+    """
+    dataset = create_dataset()
+
+    # Split indices
+    train_indices, val_indices, test_indices = dataset.split_idxs
+
+    # Create subsets for each split
+    train_dataset = torch.utils.data.Subset(dataset, train_indices)
+    val_dataset = torch.utils.data.Subset(dataset, val_indices)
+    test_dataset = torch.utils.data.Subset(dataset, test_indices)
+
+    # Create data loaders
+    train_loader = DataLoader(train_dataset, batch_size=cfg.train.batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=cfg.train.batch_size, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=cfg.train.batch_size, shuffle=False)
+
+    loaders = [train_loader, val_loader, test_loader]
+
+    return loaders
 
 
 def new_optimizer_config(cfg):
