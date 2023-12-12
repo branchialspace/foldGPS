@@ -11,7 +11,7 @@ from torch_geometric.graphgym import register
 
 from torch_geometric.graphgym.cmd_args import parse_args
 from torch_geometric.graphgym.config import (cfg, dump_cfg,
-                                             set_agg_dir, set_cfg, load_cfg,
+                                             set_cfg, load_cfg,
                                              makedirs_rm_exist)
 
 from torch_geometric.graphgym.logger import set_printing
