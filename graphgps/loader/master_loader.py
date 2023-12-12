@@ -20,6 +20,7 @@ from graphgps.loader.planetoid import Planetoid
 from graphgps.loader.dataset.aqsol_molecules import AQSOL
 from graphgps.loader.dataset.coco_superpixels import COCOSuperpixels
 from graphgps.loader.dataset.malnet_tiny import MalNetTiny
+from graphgps.loader.dataset.alphafold import Alphafold
 from graphgps.loader.dataset.voc_superpixels import VOCSuperpixels
 from graphgps.loader.split_generator import (prepare_splits,
                                              set_dataset_splits)
