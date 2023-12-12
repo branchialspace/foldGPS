@@ -213,7 +213,7 @@ def load_dataset_master(format, name, dataset_dir):
       
     # log_loaded_dataset(dataset, format, name)
 
-'''
+    '''
     # Precompute necessary statistics for positional encodings.
     pe_enabled_list = []
     for key, pecfg in cfg.items():
@@ -334,7 +334,7 @@ def load_dataset_master(format, name, dataset_dir):
 
     # Verify or generate dataset train/val/test splits
     prepare_splits(dataset)
-'''
+    '''
     # Precompute in-degree histogram if needed for PNAConv.
     if cfg.gt.layer_type.startswith('PNAConv') and len(cfg.gt.pna_degrees) == 0:
         cfg.gt.pna_degrees = compute_indegree_histogram(
