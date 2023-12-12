@@ -21,6 +21,8 @@ def overwrite_defaults_cfg(cfg):
     # Overwrite default rounding precision
     cfg.round = 5
 
+    # hardcode device
+    cfg.device = 'cuda'
 
 @register_config('extended_cfg')
 def extended_cfg(cfg):
