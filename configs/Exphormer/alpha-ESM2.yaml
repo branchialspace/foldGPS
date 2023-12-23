@@ -45,7 +45,7 @@ model:
   graph_pooling: max
 gt:
   layer_type: CustomGatedGCN+Exphormer
-  layers: 7
+  layers: 12
   n_heads: 4
   dim_hidden: 96  # `gt.dim_hidden` must match `gnn.dim_inner`
   dropout: 0.1
