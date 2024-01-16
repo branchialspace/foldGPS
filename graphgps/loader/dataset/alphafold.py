@@ -8,7 +8,7 @@ import re
 class Alphafold(Dataset):
     def __init__(self):
         super().__init__()
-        self.root = '/content/41k_prot_esm2'
+        self.root = '/content/41k_prot_foldseek'
 
     @property
     def processed_file_names(self) -> List[str]:
