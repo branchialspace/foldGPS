@@ -48,8 +48,8 @@ gt:
   layers: 12
   n_heads: 4
   dim_hidden: 96  # `gt.dim_hidden` must match `gnn.dim_inner`
-  dropout: 0
-  attn_dropout: 0
+  dropout: 0.0
+  attn_dropout: 0.0
   layer_norm: True
   batch_norm: False
 gnn:
@@ -59,7 +59,7 @@ gnn:
   dim_inner: 96  # `gt.dim_hidden` must match `gnn.dim_inner`
   batchnorm: False
   act: relu
-  dropout: 0
+  dropout: 0.0
   agg: mean
   normalize_adj: False
 optim:
