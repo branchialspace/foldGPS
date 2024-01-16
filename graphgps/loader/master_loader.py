@@ -369,7 +369,7 @@ def preformat_Alphafold(name):
     dataset = Alphafold()
     dataset.name = 'Alphafold'
     
-    split_file = '/content/drive/MyDrive/protein-DATA/41k_norm_split_indices.pt'
+    split_file = '/content/drive/MyDrive/protein-DATA/41k_prot_foldseek_split_indices.pt'
     split_dict = torch.load(split_file)
 
     file_name_to_index = {name: i for i, name in enumerate(dataset.processed_file_names)}
