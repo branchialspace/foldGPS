@@ -43,7 +43,7 @@ class LapPENodeEncoder(torch.nn.Module):
         self.expand_x = expand_x
 
         # Initial projection of eigenvalue and the node's eigenvector value
-        self.linear_A = nn.Linear(2, dim_pe)
+        self.linear_A = nn.Linear(2, dim_pe).to(torch.bfloat16)
 
         if norm_type == 'batchnorm':
             self.raw_norm = nn.BatchNorm1d(max_freqs)
@@ -111,6 +111,8 @@ class LapPENodeEncoder(torch.nn.Module):
         pos_enc[empty_mask] = 0  # (Num nodes) x (Num Eigenvectors) x 2
         if self.raw_norm:
             pos_enc = self.raw_norm(pos_enc)
+
+        pos_enc = pos_enc.to(torch.bfloat16)
         pos_enc = self.linear_A(pos_enc)  # (Num nodes) x (Num Eigenvectors) x dim_pe
 
         # PE encoder: a Transformer or DeepSet model
