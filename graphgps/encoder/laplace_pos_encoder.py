@@ -44,6 +44,9 @@ class LapPENodeEncoder(torch.nn.Module):
 
         # Initial projection of eigenvalue and the node's eigenvector value
         self.linear_A = nn.Linear(2, dim_pe)
+        # Convert the entire linear_A layer to bfloat16
+        self.linear_A = self.linear_A.to(torch.bfloat16)
+
         if norm_type == 'batchnorm':
             self.raw_norm = nn.BatchNorm1d(max_freqs)
         else:
