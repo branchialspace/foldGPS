@@ -9,13 +9,25 @@ def l1_losses(pred, true):
         # L1 loss
         l1_loss = nn.L1Loss()
         basic_loss = l1_loss(pred, true)
-        # Penalty terms
-        false_negatives = (true * (1 - pred)).sum()
-        false_positives = ((1 - true) * pred).sum()
+    
+        # Identifying non-zero (positive) and zero (negative) indices
+        positive_preds_indices = pred.nonzero(as_tuple=True)
+        positive_true_indices = true.nonzero(as_tuple=True)
+        negative_true_indices = (true == 0).nonzero(as_tuple=True)
+    
+        # False Negatives: true is positive but pred is not positive
+        false_negatives = pred[positive_true_indices] == 0
+        false_negatives_count = false_negatives.sum()
+    
+        # False Positives: pred is positive but true is not positive
+        false_positives = true[positive_preds_indices] == 0
+        false_positives_count = false_positives.sum()
+    
         # Weighted penalty
         false_positive_penalty = 0.1
         false_negative_penalty = 0.1
-        penalty = (false_negative_penalty * false_negatives) + (false_positive_penalty * false_positives)
+        penalty = (false_negative_penalty * false_negatives_count) + (false_positive_penalty * false_positives_count)
+    
         # Total loss
         loss = basic_loss + penalty
         return loss, pred
