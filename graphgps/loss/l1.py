@@ -14,7 +14,7 @@ def l1_losses(pred, true):
         false_positives = ((1 - true) * pred).sum()
         # Weighted penalty
         false_positive_penalty = 1.0
-        false_negative_penalty = 1.0 
+        false_negative_penalty = 10.0 
         penalty = (false_negative_penalty * false_negatives) + (false_positive_penalty * false_positives)
         # Total loss
         loss = basic_loss + penalty
