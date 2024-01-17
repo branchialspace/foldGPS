@@ -87,13 +87,6 @@ def create_dataset():
 
     """
     dataset = load_dataset()
-
-    # Convert all tensor attributes of each data object in the dataset to bfloat16
-    for data in dataset:
-        for key, value in data:
-            if torch.is_tensor(value):
-                data[key] = value.to(dtype=torch.bfloat16)
-
     set_dataset_info(dataset)
 
     return dataset
