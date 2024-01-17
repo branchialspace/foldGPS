@@ -94,9 +94,10 @@ class LapPENodeEncoder(torch.nn.Module):
             raise ValueError("Precomputed eigen values and vectors are "
                              f"required for {self.__class__.__name__}; "
                              "set config 'posenc_LapPE.enable' to True")
-        EigVals = batch.EigVals
-        EigVecs = batch.EigVecs
-
+            
+        EigVals = batch.EigVals.to(torch.bfloat16)
+        EigVecs = batch.EigVecs.to(torch.bfloat16)
+        
         if self.training:
             sign_flip = torch.rand(EigVecs.size(1), device=EigVecs.device)
             sign_flip[sign_flip >= 0.5] = 1.0
