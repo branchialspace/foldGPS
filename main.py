@@ -79,7 +79,7 @@ def set_dataset_info(dataset):
 
     # hard coded train, val, test spit count
     cfg.share.num_splits = 3
-
+  
 def create_dataset():
     r"""Create dataset object.
 
@@ -87,6 +87,13 @@ def create_dataset():
 
     """
     dataset = load_dataset()
+
+    # Convert all tensor attributes of each data object in the dataset to bfloat16
+    for data in dataset:
+        for key, value in data:
+            if torch.is_tensor(value):
+                data[key] = value.to(dtype=torch.bfloat16)
+
     set_dataset_info(dataset)
 
     return dataset
