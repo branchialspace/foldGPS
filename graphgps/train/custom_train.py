@@ -14,6 +14,8 @@ from torch_geometric.graphgym.utils.epoch import is_eval_epoch, is_ckpt_epoch
 from graphgps.loss.subtoken_prediction_loss import subtoken_cross_entropy
 from graphgps.utils import cfg_to_dict, flatten_dict, make_wandb_name
 
+from torch.cuda.amp import autocast, GradScaler
+
 
 def arxiv_cross_entropy(pred, true, split_idx):
     true = true.squeeze(-1)
@@ -25,35 +27,40 @@ def arxiv_cross_entropy(pred, true, split_idx):
     return loss, pred_score
 
 
-def train_epoch(logger, loader, model, optimizer, scheduler, batch_accumulation):
+def train_epoch(logger, loader, model, optimizer, scheduler, batch_accumulation, scaler):
     model.train()
     optimizer.zero_grad()
     time_start = time.time()
     for iter, batch in enumerate(loader):
         batch.split = 'train'
         batch.to(torch.device(cfg.device))
-        pred, true = model(batch)
-        if cfg.dataset.name == 'ogbg-code2':
-            loss, pred_score = subtoken_cross_entropy(pred, true)
-            _true = true
-            _pred = pred_score
-        elif cfg.dataset.name == 'ogbn-arxiv':
-            split_idx = loader.dataset.split_idx['train'].to(torch.device(cfg.device))
-            loss, pred_score = arxiv_cross_entropy(pred, true, split_idx)
-            _true = true[split_idx].detach().to('cpu', non_blocking=True)
-            _pred = pred_score.detach().to('cpu', non_blocking=True)
-        else:
-            # Reshape true for loss calculation
-            true_reshaped = true.unsqueeze(0) if true.dim() == 1 else true
-            loss, pred_score = compute_loss(pred, true_reshaped)
-            _true = true_reshaped.detach().to('cpu', non_blocking=True)
-            _pred = pred_score.detach().to('cpu', non_blocking=True)
+        # Enable autocast for the forward pass
+        with autocast():
+            pred, true = model(batch)
+            if cfg.dataset.name == 'ogbg-code2':
+                loss, pred_score = subtoken_cross_entropy(pred, true)
+                _true = true
+                _pred = pred_score
+            elif cfg.dataset.name == 'ogbn-arxiv':
+                split_idx = loader.dataset.split_idx['train'].to(torch.device(cfg.device))
+                loss, pred_score = arxiv_cross_entropy(pred, true, split_idx)
+                _true = true[split_idx].detach().to('cpu', non_blocking=True)
+                _pred = pred_score.detach().to('cpu', non_blocking=True)
+            else:
+                # Reshape true for loss calculation
+                true_reshaped = true.unsqueeze(0) if true.dim() == 1 else true
+                loss, pred_score = compute_loss(pred, true_reshaped)
+                _true = true_reshaped.detach().to('cpu', non_blocking=True)
+                _pred = pred_score.detach().to('cpu', non_blocking=True)
+        scaler.scale(loss).backward()  # Scale loss before backward
         loss.backward()
         # Parameters update after accumulating gradients for given num. batches.
         if ((iter + 1) % batch_accumulation == 0) or (iter + 1 == len(loader)):
             if cfg.optim.clip_grad_norm:
+                scaler.unscale_(optimizer)  # Unscale gradients before clipping
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-            optimizer.step()
+            scaler.step(optimizer)  # Optimizer step with scaler
+            scaler.update()  # Update the scaler
             optimizer.zero_grad()
         logger.update_stats(true=_true,
                             pred=_pred,
@@ -141,10 +148,11 @@ def custom_train(loggers, loaders, model, optimizer, scheduler):
     split_names = ['val', 'test']
     full_epoch_times = []
     perf = [[] for _ in range(num_splits)]
+    scaler = GradScaler()  # Initialize GradScaler
     for cur_epoch in range(start_epoch, cfg.optim.max_epoch):
         start_time = time.perf_counter()
         train_epoch(loggers[0], loaders[0], model, optimizer, scheduler,
-                    cfg.optim.batch_accumulation)
+                    cfg.optim.batch_accumulation, scaler)
         perf[0].append(loggers[0].write_epoch(cur_epoch))
         if is_eval_epoch(cur_epoch):
             for i in range(1, num_splits):
