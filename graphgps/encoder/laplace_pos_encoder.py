@@ -43,8 +43,7 @@ class LapPENodeEncoder(torch.nn.Module):
         self.expand_x = expand_x
 
         # Initial projection of eigenvalue and the node's eigenvector value
-        self.linear_A = nn.Linear(2, dim_pe).to(torch.bfloat16)
-
+        self.linear_A = nn.Linear(2, dim_pe)
         if norm_type == 'batchnorm':
             self.raw_norm = nn.BatchNorm1d(max_freqs)
         else:
@@ -95,10 +94,9 @@ class LapPENodeEncoder(torch.nn.Module):
             raise ValueError("Precomputed eigen values and vectors are "
                              f"required for {self.__class__.__name__}; "
                              "set config 'posenc_LapPE.enable' to True")
-            
         EigVals = batch.EigVals
         EigVecs = batch.EigVecs
-        
+
         if self.training:
             sign_flip = torch.rand(EigVecs.size(1), device=EigVecs.device)
             sign_flip[sign_flip >= 0.5] = 1.0
@@ -111,8 +109,6 @@ class LapPENodeEncoder(torch.nn.Module):
         pos_enc[empty_mask] = 0  # (Num nodes) x (Num Eigenvectors) x 2
         if self.raw_norm:
             pos_enc = self.raw_norm(pos_enc)
-
-        pos_enc = pos_enc.to(torch.bfloat16)
         pos_enc = self.linear_A(pos_enc)  # (Num nodes) x (Num Eigenvectors) x dim_pe
 
         # PE encoder: a Transformer or DeepSet model
