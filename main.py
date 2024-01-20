@@ -246,8 +246,6 @@ if __name__ == '__main__':
                 model, cfg.pretrained.dir, cfg.pretrained.freeze_main,
                 cfg.pretrained.reset_prediction_head
             )
-        # Convert the model to bfloat16
-        model = model.to(dtype=torch.bfloat16)
         optimizer = create_optimizer(model.parameters(),
                                      new_optimizer_config(cfg))
         scheduler = create_scheduler(optimizer, new_scheduler_config(cfg))
