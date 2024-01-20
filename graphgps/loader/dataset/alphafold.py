@@ -21,9 +21,4 @@ class Alphafold(Dataset):
         data_path = osp.join(self.root, self.processed_file_names[idx])
         data = torch.load(data_path)
 
-        # Convert the data to bfloat16
-        for key in data.keys():
-            if torch.is_tensor(data[key]):
-                data[key] = data[key].to(dtype=torch.bfloat16)
-
         return data
