@@ -35,7 +35,7 @@ posenc_LapPE:
   raw_norm_type: none
 train:
   mode: custom
-  batch_size: 1
+  batch_size: 5
   eval_period: 1
   ckpt_period: 100
 model:
