@@ -53,7 +53,6 @@ def train_epoch(logger, loader, model, optimizer, scheduler, batch_accumulation,
                 _true = true_reshaped.detach().to('cpu', non_blocking=True)
                 _pred = pred_score.detach().to('cpu', non_blocking=True)
         scaler.scale(loss).backward()  # Scale loss before backward
-        loss.backward()
         # Parameters update after accumulating gradients for given num. batches.
         if ((iter + 1) % batch_accumulation == 0) or (iter + 1 == len(loader)):
             if cfg.optim.clip_grad_norm:
