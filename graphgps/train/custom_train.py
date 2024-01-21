@@ -76,32 +76,34 @@ def eval_epoch(logger, loader, model, split='val'):
     for batch in loader:
         batch.split = split
         batch.to(torch.device(cfg.device))
-        if cfg.gnn.head == 'inductive_edge':
-            pred, true, extra_stats = model(batch)
-        else:
-            pred, true = model(batch)
-            extra_stats = {}
-        if cfg.dataset.name == 'ogbg-code2':
-            loss, pred_score = subtoken_cross_entropy(pred, true)
-            _true = true
-            _pred = pred_score
-        elif cfg.dataset.name == 'ogbn-arxiv':
-            index_split = loader.dataset.split_idx[split].to(torch.device(cfg.device))
-            loss, pred_score = arxiv_cross_entropy(pred, true, index_split)
-            _true = true[index_split].detach().to('cpu', non_blocking=True)
-            _pred = pred_score.detach().to('cpu', non_blocking=True)
-        else:
-            loss, pred_score = compute_loss(pred, true)
-            _true = true.detach().to('cpu', non_blocking=True)
-            _pred = pred_score.detach().to('cpu', non_blocking=True)
-        logger.update_stats(true=_true,
-                            pred=_pred,
-                            loss=loss.detach().cpu().item(),
-                            lr=0, time_used=time.time() - time_start,
-                            params=cfg.params,
-                            dataset_name=cfg.dataset.name,
-                            **extra_stats)
-        time_start = time.time()
+        # Enable autocast for the forward pass
+        with autocast():
+            if cfg.gnn.head == 'inductive_edge':
+                pred, true, extra_stats = model(batch)
+            else:
+                pred, true = model(batch)
+                extra_stats = {}
+            if cfg.dataset.name == 'ogbg-code2':
+                loss, pred_score = subtoken_cross_entropy(pred, true)
+                _true = true
+                _pred = pred_score
+            elif cfg.dataset.name == 'ogbn-arxiv':
+                index_split = loader.dataset.split_idx[split].to(torch.device(cfg.device))
+                loss, pred_score = arxiv_cross_entropy(pred, true, index_split)
+                _true = true[index_split].detach().to('cpu', non_blocking=True)
+                _pred = pred_score.detach().to('cpu', non_blocking=True)
+            else:
+                loss, pred_score = compute_loss(pred, true)
+                _true = true.detach().to('cpu', non_blocking=True)
+                _pred = pred_score.detach().to('cpu', non_blocking=True)
+            logger.update_stats(true=_true,
+                                pred=_pred,
+                                loss=loss.detach().cpu().item(),
+                                lr=0, time_used=time.time() - time_start,
+                                params=cfg.params,
+                                dataset_name=cfg.dataset.name,
+                                **extra_stats)
+            time_start = time.time()
 
 
 @register_train('custom')
