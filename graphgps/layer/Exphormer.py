@@ -54,6 +54,7 @@ class ExphormerAttention(nn.Module):
 
         # Apply attention score to each source node to create edge messages
         msg = batch.V_h[edge_index[0].to(torch.long)] * score  # (num real edges) x num_heads x out_dim
+        msg = msg.to(torch.float16)
         # Add-up real msgs in destination nodes as given by batch.edge_index[1]
         batch.wV = torch.zeros_like(batch.V_h)  # (num nodes in batch) x num_heads x out_dim
         scatter(msg, edge_index[1], dim=0, out=batch.wV, reduce='add')
