@@ -6,6 +6,7 @@ from torch_geometric.graphgym.register import register_loss
 @register_loss('l1_losses')
 def l1_losses(pred, true):
     if cfg.model.loss_fun == 'l1': # L1 with false negative/positive penalty
+        pred = pred.view(true.size())
         # L1 loss
         l1_loss = nn.L1Loss()
         basic_loss = l1_loss(pred, true)
