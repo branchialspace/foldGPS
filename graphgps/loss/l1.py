@@ -1,11 +1,30 @@
+import torch
 import torch.nn as nn
 from torch_geometric.graphgym.config import cfg
 from torch_geometric.graphgym.register import register_loss
 
+def mse_sparse(predictions, targets, epsilon=1e-6):
+    # Mean Squared Error Component
+    mse_loss = nn.MSELoss()(predictions, targets)
+
+    # Sparsity Component
+    sparsity_loss = torch.mean((predictions - targets)**2 / (targets + epsilon))
+
+    # Combine the losses
+    combined_loss = mse_loss + sparsity_loss
+
+    return combined_loss
 
 @register_loss('l1_losses')
+
 def l1_losses(pred, true):
-    if cfg.model.loss_fun == 'l1': # L1 with false negative/positive penalty
+    if cfg.model.loss_fun == 'l1':
+        pred = pred.view(true.size())
+        loss = mse_sparse(pred, true)
+
+        return loss, pred
+        
+    elif cfg.model.loss_fun == 'l1_fnp': # L1 with false negative/positive penalty
         pred = pred.view(true.size())
         # L1 loss
         l1_loss = nn.L1Loss()
@@ -33,7 +52,7 @@ def l1_losses(pred, true):
         loss = basic_loss + penalty
         return loss, pred
         
-    elif cfg.model.loss_fun == 'ogl1':
+    elif cfg.model.loss_fun == 'l1_og':
         l1_loss = nn.L1Loss()
         loss = l1_loss(pred, true)
         return loss, pred
