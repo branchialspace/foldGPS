@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch_geometric.graphgym.config import cfg
 from torch_geometric.graphgym.register import register_loss
 
-def weighted_MSE(predictions, targets, epsilon=1e-5, weight_factor=1.0):
+def weighted_MSE(predictions, targets, epsilon=1e-6, weight_factor=1000):
     # Calculate the weights based on targets
     weights = (targets + epsilon) * weight_factor
     # Weighted MSE
