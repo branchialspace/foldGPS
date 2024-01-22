@@ -3,24 +3,22 @@ import torch.nn as nn
 from torch_geometric.graphgym.config import cfg
 from torch_geometric.graphgym.register import register_loss
 
-def mse_sparse(predictions, targets, epsilon=1e-6):
-    # Mean Squared Error Component
-    mse_loss = nn.MSELoss()(predictions, targets)
+def weighted_MSE(predictions, targets, epsilon=1e-6, weight_factor=1.0):
+    # Calculate the weights based on targets
+    weights = (targets + epsilon) * weight_factor
+    # Weighted MSE
+    weighted_mse = ((predictions - targets)**2) * weights
+    loss = torch.mean(weighted_mse)
 
-    # Sparsity Component
-    sparsity_loss = torch.mean((predictions - targets)**2 / (targets + epsilon))
+    return loss
 
-    # Combine the losses
-    combined_loss = mse_loss + sparsity_loss
-
-    return combined_loss
 
 @register_loss('l1_losses')
 
 def l1_losses(pred, true):
     if cfg.model.loss_fun == 'l1':
         pred = pred.view(true.size())
-        loss = mse_sparse(pred, true)
+        loss = weighted_MSE(pred, true)
 
         return loss, pred
         
