@@ -112,6 +112,7 @@ class CustomLogger(Logger):
             res['auc'] = reformat(auroc(pred_score.to(torch.device(cfg.device)),
                                         true.to(torch.device(cfg.device)).squeeze(),
                                         num_classes=pred_score.shape[1],
+                                        task="multiclass",
                                         average='macro'))
 
             if self.test_scores:
