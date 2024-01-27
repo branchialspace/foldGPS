@@ -13,4 +13,5 @@ def multilabel_cross_entropy(pred, true):
                              "'classification_multilabel' task_type.")
         bce_loss = nn.BCEWithLogitsLoss()
         is_labeled = true == true  # Filter our nans.
+        pred = pred.view(true.size())
         return bce_loss(pred[is_labeled], true[is_labeled].float()), pred
