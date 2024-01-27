@@ -144,7 +144,7 @@ class CustomLogger(Logger):
                               pos_label=1,
                               cast_to_int=True)
         results = {
-            'accuracy': reformat(acc(pred_score, true)),
+            'accuracy': reformat(acc(pred_score, true), task="multilabel"),
             'ap': reformat(ap(pred_score, true)),
             'auc': reformat(auroc(pred_score, true)),
         }
