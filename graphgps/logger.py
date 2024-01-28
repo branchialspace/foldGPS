@@ -135,7 +135,8 @@ class CustomLogger(Logger):
                             target_nan_mask='ignore-mean-label',
                             threshold=0.,
                             cast_to_int=True,
-                            task="multilabel")
+                            task="multilabel",
+                            num_labels=4940)
         ap = MetricWrapper(metric='averageprecision',
                            target_nan_mask='ignore-mean-label',
                            pos_label=1,
