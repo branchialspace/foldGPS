@@ -134,7 +134,8 @@ class CustomLogger(Logger):
         acc = MetricWrapper(metric='accuracy',
                             target_nan_mask='ignore-mean-label',
                             threshold=0.,
-                            cast_to_int=True)
+                            cast_to_int=True,
+                            task="multilabel")
         ap = MetricWrapper(metric='averageprecision',
                            target_nan_mask='ignore-mean-label',
                            pos_label=1,
@@ -144,7 +145,7 @@ class CustomLogger(Logger):
                               pos_label=1,
                               cast_to_int=True)
         results = {
-            'accuracy': reformat(acc(pred_score, true), task="multilabel"),
+            'accuracy': reformat(acc(pred_score, true)),
             'ap': reformat(ap(pred_score, true)),
             'auc': reformat(auroc(pred_score, true)),
         }
