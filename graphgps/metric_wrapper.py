@@ -320,7 +320,6 @@ class MetricWrapper:
         r"""
         Compute the metric with the method `self.compute`
         """
-        preds = preds.view(target.size())
         return self.compute(preds, target)
 
     def __repr__(self):
