@@ -132,23 +132,20 @@ class CustomLogger(Logger):
         true = true.to(torch.device(cfg.device))
         pred_score = pred_score.to(torch.device(cfg.device))
         acc = MetricWrapper(metric='accuracy',
-                            target_nan_mask='ignore-mean-label',
                             threshold=0.,
-                            cast_to_int=True,
                             task="multilabel",
                             num_labels=4940)
         ap = MetricWrapper(metric='averageprecision',
-                           target_nan_mask='ignore-mean-label',
-                           pos_label=1,
-                           cast_to_int=True)
+                            task="multilabel",
+                            num_labels=4940)
         auroc = MetricWrapper(metric='auroc',
-                              target_nan_mask='ignore-mean-label',
-                              pos_label=1,
-                              cast_to_int=True)
+                              task="multilabel",
+                              num_labels=4940)
+        true_long = true.long()
         results = {
-            'accuracy': reformat(acc(pred_score, true)),
-            'ap': reformat(ap(pred_score, true)),
-            'auc': reformat(auroc(pred_score, true)),
+            'accuracy': reformat(acc(pred_score, true_long)),
+            'ap': reformat(ap(pred_score, true_long)),
+            'auc': reformat(auroc(pred_score, true_long)),
         }
 
         if self.test_scores:
