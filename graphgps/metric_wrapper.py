@@ -313,7 +313,15 @@ class MetricWrapper:
             #                       (~torch.isnan(x)).count_nonzero())
 
         else:
-            metric_val = self.metric(preds, target, **self.kwargs)
+            # Assuming preds and target are initially [N, 1] where N = num_graphs * 4940
+            total_elements = preds.numel()  # Get the total number of elements in preds
+            num_graphs = total_elements // 4940  # Calculate the number of graphs
+
+            # Reshape preds and target to [num_graphs, 4940]
+            preds_reshaped = preds.reshape(num_graphs, 4940)
+            target_reshaped = target.reshape(num_graphs, 4940)
+
+            metric_val = self.metric(preds_reshaped, target_reshaped, **self.kwargs)
         return metric_val
 
     def __call__(self, preds: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
